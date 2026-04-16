@@ -1,1 +1,1 @@
-export const PROJECT_NAME = 'Pulao';
+export const PROJECT_NAME = 'Voice Server';

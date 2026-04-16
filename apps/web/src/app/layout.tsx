@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-    title: "Saffron - Pulao Web",
-    description: "The web interface for the Pulao project",
+    title: "Voice Server",
+    description: "Premium Voice Experience",
 };
 
 export default function RootLayout({
     children,
-}: Readonly<{
+}: {
     children: React.ReactNode;
-}>) {
+}) {
     return (
         <html lang="en">
             <body>{children}</body>
