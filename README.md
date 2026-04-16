@@ -1,22 +1,22 @@
-# Pulao Monorepo 🥘
+# Voice Server 🎤
 
-Pulao is a food-themed, cross-platform project built to explore modern full-stack patterns.
+A modern, cross-platform voice server monorepo.
 
-## The Ingredients (Apps)
-- **Basmati** (`apps/basmati`): NestJS Backend.
-- **Saffron** (`apps/saffron`): Next.js Web App.
-- **Cilantro** (`apps/cilantro`): Expo Mobile App.
-- **Masala** (`packages/masala`): Shared types and utilities.
+## Workspace Structure
+
+- `apps/api`: NestJS Backend (formerly Basmati).
+- `apps/web`: Next.js Web App (formerly Saffron).
+- `apps/mobile`: Expo Mobile App (formerly Cilantro).
+- `apps/desktop`: Electron Desktop App (formerly Cardamom).
+- `packages/shared`: Shared types and utilities (formerly Masala).
 
 ## Orchestration
 This project uses **Turborepo** and **pnpm workspaces**.
 
-To start everything at once:
+To start everything in development mode:
 ```bash
 pnpm dev
 ```
 
 ## Inspiration
 Inspired by the architecture of **DogeHouse**.
-# voice-server
-# voice-server
