@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Nunito } from "next/font/google";
 import "./globals.css";
-import { VoiceProvider } from "../context/VoiceContext";
 import { Sidebar } from "../components/Sidebar";
 import { FloatingRoomBar } from "../components/FloatingRoomBar";
+import { CreateRoomModal } from "../components/CreateRoomModal";
+import { FullRoomView } from "../components/FullRoomView";
+import { VoiceProvider } from "../context/VoiceContext";
 
 const nunito = Nunito({
   variable: "--font-nunito",
@@ -22,18 +24,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${nunito.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${nunito.variable} h-full antialiased`}>
       <body className={`${nunito.className} h-full font-sans bg-background`}>
         <VoiceProvider>
           <div className="flex h-screen overflow-hidden">
             <Sidebar />
-            <main className="flex-1 h-full overflow-y-auto">
+            <main className="flex-1 h-full overflow-y-auto relative">
               {children}
+              <FloatingRoomBar />
             </main>
-            <FloatingRoomBar />
+            <CreateRoomModal />
+            <FullRoomView />
           </div>
         </VoiceProvider>
       </body>

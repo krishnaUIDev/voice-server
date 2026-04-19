@@ -4,7 +4,8 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 import { io, Socket } from "socket.io-client";
 
 interface User {
-    id: string;
+    id: string; // Persistent
+    socketId: string; // Ephemeral
     name: string;
     isMuted: boolean;
 }
@@ -28,6 +29,7 @@ interface VoiceContextType {
     userName: string;
     messages: Message[];
     socket: Socket | null;
+    onlineUsers: { id: string; name: string }[];
     isCreating: boolean;
     setIsCreating: (val: boolean) => void;
     createRoom: (name: string) => void;
@@ -36,6 +38,8 @@ interface VoiceContextType {
     toggleMute: (roomId: string) => void;
     updateUserName: (name: string) => void;
     sendMessage: (roomId: string, text: string) => void;
+    isViewExpanded: boolean;
+    setIsViewExpanded: (val: boolean) => void;
 }
 
 const VoiceContext = createContext<VoiceContextType | undefined>(undefined);
@@ -56,26 +60,60 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         currentRoomRef.current = currentRoom;
     }, [currentRoom]);
 
+    const [userId, setUserId] = useState<string>("");
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
-        const s = io("http://localhost:4000");
-        setSocket(s);
+        setMounted(true);
+        let id = localStorage.getItem("pulao_user_id");
+        if (!id) {
+            id = "user_" + Math.random().toString(36).substring(2, 11);
+            localStorage.setItem("pulao_user_id", id);
+        }
+        setUserId(id);
 
         const storedName = localStorage.getItem("userName");
         if (storedName) {
             setUserName(storedName);
-            s.emit("updateUserName", storedName);
+        }
+    }, []);
+
+    const [onlineUsers, setOnlineUsers] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        const s = io("http://localhost:4000");
+        setSocket(s);
+
+        // On connection, the server's handleConnection already emits roomsList and onlineUsersList
+        // so we just need to listen for them.
+
+        if (mounted) {
+            const storedName = localStorage.getItem("userName");
+            if (storedName) {
+                s.emit("updateUserName", { name: storedName, userId: localStorage.getItem("pulao_user_id") });
+            }
         }
 
         s.on("roomsList", (updatedRooms: Room[]) => {
+            console.log("[VoiceContext] Received roomsList:", updatedRooms);
             setRooms(updatedRooms);
             const cur = currentRoomRef.current;
             if (cur) {
                 const updated = updatedRooms.find(r => r.id === cur.id);
-                if (updated) setCurrentRoom(updated);
+                if (updated) {
+                    console.log("[VoiceContext] Updating currentRoom from roomsList:", updated);
+                    setCurrentRoom(updated);
+                }
             }
         });
 
+        s.on("onlineUsersList", (users: { id: string; name: string }[]) => {
+            console.log("[VoiceContext] Received onlineUsersList:", users.length);
+            setOnlineUsers(users);
+        });
+
         s.on("roomUpdated", (updatedRoom: Room) => {
+            console.log("[VoiceContext] Received roomUpdated:", updatedRoom.id, "Users:", updatedRoom.users.length);
             const cur = currentRoomRef.current;
             if (cur?.id === updatedRoom.id) {
                 setCurrentRoom(updatedRoom);
@@ -84,6 +122,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         });
 
         s.on("newMessage", (message: Message) => {
+            console.log("[VoiceContext] Received newMessage:", message);
             setMessages(prev => [...prev, message]);
         });
 
@@ -180,27 +219,28 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }, []);
 
     const createRoom = useCallback((name: string) => {
+        if (!socket || !userId) return;
         clearLocalRoomState();
-        socket?.emit("createRoom", { name });
-    }, [socket, clearLocalRoomState]);
+        socket.emit("createRoom", { name, userId, userName });
+    }, [socket, userId, userName, clearLocalRoomState]);
 
     const joinRoom = useCallback(async (roomId: string) => {
-        if (!socket) return;
+        if (!socket || !userId) return;
         try {
             clearLocalRoomState();
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             localStreamRef.current = stream;
-            socket.emit("joinRoom", { roomId });
+            socket.emit("joinRoom", { roomId, userId, userName });
 
             const room = rooms.find(r => r.id === roomId);
             if (room) {
                 setCurrentRoom(room);
                 room.users.forEach(user => {
-                    if (user.id !== socket.id) {
-                        const pc = createPeerConnection(user.id, socket);
+                    if (user.socketId !== socket.id) {
+                        const pc = createPeerConnection(user.socketId, socket);
                         pc.createOffer().then(offer => {
                             pc.setLocalDescription(offer);
-                            socket.emit("webrtc-offer", { offer, to: user.id });
+                            socket.emit("webrtc-offer", { offer, to: user.socketId });
                         });
                     }
                 });
@@ -208,7 +248,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         } catch (e) {
             console.error("Failed to join room:", e);
         }
-    }, [socket, rooms]);
+    }, [socket, userId, userName, rooms, clearLocalRoomState]);
 
     const leaveRoom = useCallback((roomId: string) => {
         socket?.emit("leaveRoom", { roomId });
@@ -239,14 +279,15 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updateUserName = useCallback((name: string) => {
         setUserName(name);
         localStorage.setItem("userName", name);
-        socket?.emit("updateUserName", name);
-    }, [socket]);
+        socket?.emit("updateUserName", { name, userId });
+    }, [socket, userId]);
 
     const sendMessage = useCallback((roomId: string, text: string) => {
         socket?.emit("sendMessage", { roomId, text });
     }, [socket]);
 
     const [isCreating, setIsCreating] = useState<boolean>(false);
+    const [isViewExpanded, setIsViewExpanded] = useState<boolean>(false);
 
     return (
         <VoiceContext.Provider value={{
@@ -255,8 +296,11 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             userName,
             messages,
             socket,
+            onlineUsers,
             isCreating,
             setIsCreating,
+            isViewExpanded,
+            setIsViewExpanded,
             createRoom,
             joinRoom,
             leaveRoom,

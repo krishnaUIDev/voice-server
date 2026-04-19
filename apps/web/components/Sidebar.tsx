@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useVoiceContext } from '../context/VoiceContext';
 
 export const Sidebar = () => {
-    const { userName, setIsCreating } = useVoiceContext();
+    const { userName, setIsCreating, onlineUsers } = useVoiceContext();
     const pathname = usePathname();
 
     const navItems = [
@@ -21,10 +21,10 @@ export const Sidebar = () => {
         <aside className="w-64 flex flex-col bg-sidebar border-r border-zinc-200 p-6 h-full overflow-y-auto">
             <div className="flex flex-col gap-1 mb-8">
                 <div className="w-14 h-14 bg-blue-600 rounded-[1.5rem] flex items-center justify-center text-white text-xl font-black shadow-lg mb-3 overflow-hidden">
-                    {userName.charAt(0).toUpperCase()}
+                    {userName?.charAt(0).toUpperCase() || "A"}
                 </div>
-                <h2 className="text-lg font-black tracking-tight text-[#343330] leading-none">{userName}</h2>
-                <p className="text-zinc-500 font-bold text-[10px]">@{userName.toLowerCase().replace(/\s/g, '')}</p>
+                <h2 className="text-lg font-black tracking-tight text-[#343330] leading-none">{userName || "Anonymous"}</h2>
+                <p className="text-zinc-500 font-bold text-[10px]">@{userName?.toLowerCase().replace(/\s/g, '') || "anonymous"}</p>
             </div>
 
             <nav className="flex flex-col gap-2 mb-8">
@@ -42,38 +42,16 @@ export const Sidebar = () => {
 
             <div className="flex flex-col gap-6">
                 <div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-4 px-2">Starred</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-4 px-2">Online Now ({onlineUsers.length})</p>
                     <div className="flex flex-col gap-4 px-2">
-                        {[
-                            { name: 'Theresa Webb', status: 'online' },
-                            { name: 'Marvin McKinney', status: 'online' },
-                            { name: 'Jenny Wilson', status: 'offline' }
-                        ].map(user => (
-                            <div key={user.name} className="flex items-center gap-3 group cursor-pointer">
+                        {onlineUsers.slice(0, 10).map(user => (
+                            <div key={user.id} className="flex items-center gap-3 group cursor-pointer">
                                 <div className="relative">
-                                    <div className="w-9 h-9 rounded-[1rem] bg-zinc-200 border-2 border-white shadow-sm" />
-                                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${user.status === 'online' ? 'bg-green-500' : 'bg-zinc-300'}`} />
+                                    <div className="w-9 h-9 rounded-[1rem] bg-zinc-200 border-2 border-white shadow-sm flex items-center justify-center font-bold text-zinc-600 text-[10px]">
+                                        {user.name?.charAt(0).toUpperCase() || "U"}
+                                    </div>
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white bg-green-500" />
                                 </div>
-                                <span className="text-xs font-black text-zinc-600 group-hover:text-zinc-900">{user.name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div>
-                    <div className="flex justify-between items-center mb-4 px-2">
-                        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Available to chat</p>
-                        <span className="bg-zinc-100 text-zinc-400 w-4 h-4 rounded-lg flex items-center justify-center text-[9px] font-black">+</span>
-                    </div>
-                    <div className="flex flex-col gap-4 px-2">
-                        {[
-                            { name: 'Arlene McCoy' },
-                            { name: 'Jacob Jones' },
-                            { name: 'Albert Flores' },
-                            { name: 'Savannah Nguyen' }
-                        ].map(user => (
-                            <div key={user.name} className="flex items-center gap-3 group cursor-pointer">
-                                <div className="w-9 h-9 rounded-[1rem] bg-zinc-200 border-2 border-white shadow-sm" />
                                 <span className="text-xs font-black text-zinc-600 group-hover:text-zinc-900">{user.name}</span>
                             </div>
                         ))}
