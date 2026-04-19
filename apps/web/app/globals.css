@@ -1,26 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f0e9;
+  --foreground: #343330;
+  --sidebar: #f8f7f4;
+  --card: #ffffff;
+  --highlight: #e8f2e9;
+  --highlight-text: #2a5d38;
+  --zinc-200: #e5e7eb;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-sidebar: var(--sidebar);
+  --color-card: var(--card);
+  --color-highlight: var(--highlight);
+  --color-highlight-text: var(--highlight-text);
+  --font-sans: var(--font-nunito);
   --font-mono: var(--font-geist-mono);
 }
 
+/* Force light theme colors even if system is in dark mode */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #f4f0e9;
+    --foreground: #343330;
+    --sidebar: #f8f7f4;
+    --card: #ffffff;
+    --highlight: #e8f2e9;
+    --highlight-text: #2a5d38;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-in {
+  animation-duration: 300ms;
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: fadeIn;
+}
+
+.zoom-in {
+  animation-name: zoomIn;
 }
